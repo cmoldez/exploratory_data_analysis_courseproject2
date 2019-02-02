@@ -1,29 +1,18 @@
-if(!exists("NEI")){
-  NEI <- readRDS("./data/summarySCC_PM25.rds")
-}
-if(!exists("SCC")){
-  SCC <- readRDS("./data/Source_Classification_Code.rds")
-}
+nei <- readRDS("data/summarySCC_PM25.rds")
+scc <- readRDS("data/Source_Classification_Code.rds")
 
-library(ggplot2)
+library('data.table')
+library('ggplot2')
 
-# Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, 
-# which of these four sources have seen decreases in emissions from 1999 2008 for Baltimore City? 
-# Which have seen increases in emissions from 1999 2008? 
-# Use the ggplot2 plotting system to make a plot answer this question.
+df <- data.table(nei)
 
-# 24510 is Baltimore, see plot2.R
-subsetNEI  <- NEI[NEI$fips=="24510", ]
+baltimore <- subset(df, fips == '24510')
 
-aggregatedTotalByYearAndType <- aggregate(Emissions ~ year + type, subsetNEI, sum)
+by_year <- baltimore[, list(emissions=sum(Emissions)), by=c('year', 'type')]
+by_year$year = as.numeric(as.character(by_year$year))
+by_year$emissions = as.numeric(as.character(by_year$emissions))
 
+ggplot(data=by_year, aes(x=year, y=emissions, col=type)) + geom_line() + geom_point() + ggtitle("Emissions in Baltimore City")
 
-
-png("plot3.png", width=640, height=480)
-g <- ggplot(aggregatedTotalByYearAndType, aes(year, Emissions, color = type))
-g <- g + geom_line() +
-  xlab("year") +
-  ylab(expression('Total PM'[2.5]*" Emissions")) +
-  ggtitle('Total Emissions in Baltimore City, Maryland (fips == "24510") from 1999 to 2008')
-print(g)
+dev.copy(png, file="plot3.png", width=480, height=480)
 dev.off()
